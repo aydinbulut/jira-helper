@@ -15,11 +15,8 @@
   // ── Page detection ─────────────────────────────────────────────────────────
 
   function isJiraIssuePage() {
-    const hasIssueKey = /\/browse\/[A-Z][A-Z0-9_]*-\d+/.test(location.pathname)
+    return /\/browse\/[A-Z][A-Z0-9_]*-\d+/.test(location.pathname)
       || /[?&]selectedIssue=[A-Z][A-Z0-9_]*-\d+/.test(location.search);
-    if (!hasIssueKey) return false;
-    const meta = document.querySelector('meta[name="application-name"]');
-    return !!(meta && /jira/i.test(meta.getAttribute('content') || ''));
   }
 
   function extractIssueKey() {
@@ -45,14 +42,20 @@
       || document.querySelector('[id$="_more_drop"]');
     if (dropdown) {
       for (const li of dropdown.querySelectorAll('li')) {
-        if (/create sub.?task/i.test(li.textContent)) return li;
+        if (/create (sub.?task|child issue)/i.test(li.textContent)) return li;
       }
     }
 
-    // Strategy 4: text scan across all anchors (last resort)
-    for (const a of document.querySelectorAll('a')) {
-      if (/^create sub.?task$/i.test(a.textContent.trim())) {
-        return a.closest('li') || a;
+    // Strategy 4: text scan scoped to known Jira action bar containers
+    // (avoids matching "Create sub-task" links in the issue list panel on ?jql= pages)
+    const containers = document.querySelectorAll(
+      '#opsbar-operations, #opsbar_operations, .ops-menus, [id*="opsbar"], .aui-toolbar2'
+    );
+    for (const container of containers) {
+      for (const a of container.querySelectorAll('a')) {
+        if (/^create (sub.?task|child issue)$/i.test(a.textContent.trim())) {
+          return a.closest('li') || a;
+        }
       }
     }
 
