@@ -17,7 +17,7 @@ A Chrome extension that adds a **"Create multi-sub-task"** option to the Jira is
 
 ## Requirements
 
-- **Jira Software** Data Center or Server, version 8.x–10.x, classic UI
+- **`https://jiraeu.epam.com`** — the extension only activates on this domain
 - **Chrome** browser (any recent version)
 - Must be **logged into Jira** — the extension uses your existing browser session (no credentials are stored or sent anywhere)
 

@@ -15,7 +15,7 @@ After editing `content.js` or `styles.css`, click the reload icon on the extensi
 
 ## File Architecture
 
-**`manifest.json`** — MV3 manifest. Uses `"matches": ["*://*/*"]` because Jira DC is self-hosted at arbitrary URLs. Self-limiting logic lives in `content.js`.
+**`manifest.json`** — MV3 manifest. Scoped to `"matches": ["https://jiraeu.epam.com/*"]` — the extension only activates on that domain. The page-detection guard in `content.js` still limits activation to issue pages (`/browse/PROJ-123`) within that domain.
 
 **`content.js`** — All extension logic in a single IIFE. Responsibilities:
 - Page detection guard (URL pattern + `<meta name="application-name">`)

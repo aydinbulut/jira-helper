@@ -5,7 +5,7 @@
   "description": "Adds 'Create multi-sub-task' to the Jira More dropdown for bulk subtask creation.",
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
+      "matches": ["https://jiraeu.epam.com/*"],
       "js": ["content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle"
