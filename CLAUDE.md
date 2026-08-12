@@ -2,7 +2,7 @@
 
 ## Overview
 
-A Chrome MV3 extension for Jira Software Data Center (classic AUI-based UI). It injects a "Create multi-sub-task" menu item into the More dropdown on issue pages (`/browse/PROJ-123`). Clicking it opens a modal where multiple subtask titles (one per line) are entered and created in one operation via the Jira REST API v2.
+A Chrome MV3 extension for Jira Software Data Center (classic AUI-based UI). It injects a "Create multi-sub-task" menu item into the More dropdown on issue pages (`/browse/PROJ-123`). Clicking it opens a modal with a row-based table where each subtask has its own Summary, Component, and Estimate (hours) fields. All subtasks are created in one operation via the Jira REST API v2. The modal has zoom in/out buttons for screen sharing, with the zoom level persisted in `localStorage`.
 
 ## Loading and Testing in Chrome
 
@@ -23,8 +23,11 @@ After editing `content.js` or `styles.css`, click the reload icon on the extensi
 - Menu item injection with idempotency guard
 - SPA navigation detection via `pushState`/`replaceState` override + `popstate`
 - `MutationObserver` to handle lazy-rendered dropdowns
-- Jira REST API calls (fetch project key, fetch subtask issue type ID, create subtasks)
-- Modal DOM construction, event wiring, live count, per-row progress tracking
+- Row-based modal UI: `buildRowsHeader()`, `buildInputRow()`, `addRow()`, `validRows()`, `updateCreateBtn()`, `transformRowToResult()`
+- Zoom controls: `loadZoomIndex()`, `applyZoom()` — use CSS `zoom` property on the modal element, persist in `localStorage`
+- Combined keyboard handler (`modalKeyHandler` closure): Escape closes, `-`/`+` zoom when not in an input
+- Jira REST API: `fetchProjectKey()`, `fetchSubtaskIssueTypeId()`, `createSubtask()` (includes `components` and `timetracking`)
+- `handleCreate()` — orchestrates pre-flight fetch, row collection, sequential creation with 175ms delay, in-place row transformation
 
 **`styles.css`** — Modal and overlay styles only. All selectors use the `#jbsc-` prefix to avoid collisions with Jira's AUI styles. No floating button or dropdown item styles (those inherit from Jira).
 
@@ -41,16 +44,35 @@ The injection code tries in order:
 4. Text scan across all `<a>` on the page (last resort)
 
 ### `X-Atlassian-Token: no-check`
-This header is required on all POST requests to the Jira REST API from same-origin browser scripts. It tells Jira's CSRF filter to skip the token check for REST API calls. Do not remove it — requests will get 403 without it.
+Required on all POST requests to the Jira REST API from same-origin browser scripts. It tells Jira's CSRF filter to skip the token check. Do not remove it — requests will get 403 without it.
 
 ### `createmeta` dual-endpoint fallback
 The primary endpoint `/rest/api/2/issue/createmeta/{projectKey}/issuetypes` was introduced in Jira DC 9.0. The fallback `/rest/api/2/issue/createmeta?projectKeys=...&expand=projects.issuetypes` covers Jira DC 8.x and older. Both are tried automatically.
 
+### Component and estimate fields
+`createSubtask()` sends two additional fields beyond summary:
+- `components: [{ name: componentName }]` — Jira matches by name; the component must exist in the project
+- `timetracking: { originalEstimate: "Xh" }` — only sent if estimate > 0; Jira DC accepts the `Xh` string format
+
+### Row-based UI
+The modal starts with 3 empty rows. Each row (`buildInputRow()`) contains a text summary input (`flex: 1`), a `<select>` for component (values from `COMPONENTS` constant), a number input for hours, and a delete button. Deleting the last row clears it instead of removing it. `validRows()` filters rows with non-empty summary — only those are submitted.
+
 ### 175ms delay between creates
-A small sleep is added between successive `POST /rest/api/2/issue` calls to avoid triggering Jira's rate limiter on large batches. Adjust `DELAY_MS` at the top of `content.js` if needed.
+A small sleep between successive `POST /rest/api/2/issue` calls avoids triggering Jira's rate limiter on large batches. Adjust `DELAY_MS` at the top of `content.js` if needed.
+
+### Zoom — CSS `zoom` property
+`applyZoom()` sets `modal.style.zoom = ZOOM_LEVELS[index]`. The CSS `zoom` property (Chrome-native, non-standard) scales the element and affects layout — the modal physically grows and the overlay's flexbox re-centres it. This is intentionally used instead of `transform: scale` so that all click targets scale correctly. Four levels: 1.0, 1.2, 1.4, 1.6. The index is persisted in `localStorage` under `ZOOM_KEY` so it survives page reloads.
+
+### Keyboard handler — `modalKeyHandler` closure
+`handleEscapeKey` was replaced by a module-level `let modalKeyHandler = null`. In `openModal()`, it is assigned as a closure capturing `zoomIndex`, `modal`, `zoomOutBtn`, and `zoomInBtn`. This closure handles three keys:
+- `Escape` → `closeModal()`
+- `-` → zoom out (only if `document.activeElement` is not `INPUT` or `TEXTAREA`)
+- `+` → zoom in (same guard)
+
+`closeModal()` removes the handler by reference and nulls it out, ensuring no leak across navigations.
 
 ### SPA navigation
-Jira's issue view is a SPA. URL changes do not cause a full page reload. The extension patches `history.pushState` and `history.replaceState` and listens to `popstate` to detect navigation, remove the injected menu item, and re-inject it for the new issue. A 300ms delay before re-injection gives Jira time to render the new page's DOM.
+Jira's issue view is a SPA. The extension patches `history.pushState` and `history.replaceState` and listens to `popstate` to detect navigation, remove the injected menu item, close any open modal, and re-inject for the new issue after a 300ms delay.
 
 ## Jira API Compatibility
 
