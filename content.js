@@ -15,14 +15,18 @@
   // ── Page detection ─────────────────────────────────────────────────────────
 
   function isJiraIssuePage() {
-    if (!/\/browse\/[A-Z][A-Z0-9_]*-\d+/.test(location.pathname)) return false;
+    const hasIssueKey = /\/browse\/[A-Z][A-Z0-9_]*-\d+/.test(location.pathname)
+      || /[?&]selectedIssue=[A-Z][A-Z0-9_]*-\d+/.test(location.search);
+    if (!hasIssueKey) return false;
     const meta = document.querySelector('meta[name="application-name"]');
     return !!(meta && /jira/i.test(meta.getAttribute('content') || ''));
   }
 
   function extractIssueKey() {
-    const m = location.pathname.match(/\/browse\/([A-Z][A-Z0-9_]*-\d+)/);
-    return m ? m[1] : null;
+    const pathMatch = location.pathname.match(/\/browse\/([A-Z][A-Z0-9_]*-\d+)/);
+    if (pathMatch) return pathMatch[1];
+    const paramMatch = location.search.match(/[?&]selectedIssue=([A-Z][A-Z0-9_]*-\d+)/);
+    return paramMatch ? paramMatch[1] : null;
   }
 
   // ── Menu injection ─────────────────────────────────────────────────────────
