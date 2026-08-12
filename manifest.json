@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Jira Bulk Subtask Creator",
+  "version": "1.0.0",
+  "description": "Adds 'Create multi-sub-task' to the Jira More dropdown for bulk subtask creation.",
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

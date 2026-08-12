@@ -1,0 +1,206 @@
+/* Jira Bulk Subtask Creator — modal styles only, namespaced under #jbsc- */
+
+#jbsc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 30, 66, 0.54);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+
+#jbsc-modal {
+  background: #fff;
+  border-radius: 5px;
+  width: 540px;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding: 24px 28px;
+  box-shadow: 0 8px 32px rgba(9, 30, 66, 0.25);
+  position: relative;
+  color: #172B4D;
+}
+
+#jbsc-modal h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #172B4D;
+  padding-right: 28px;
+}
+
+#jbsc-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: #6B778C;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+#jbsc-close-btn:hover {
+  background: #F4F5F7;
+  color: #172B4D;
+}
+
+#jbsc-issue-context {
+  font-size: 12px;
+  color: #6B778C;
+  margin: 0 0 16px;
+}
+
+#jbsc-textarea {
+  display: block;
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  padding: 8px 10px;
+  border: 2px solid #DFE1E6;
+  border-radius: 3px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  color: #172B4D;
+  transition: border-color 0.15s;
+}
+
+#jbsc-textarea:focus {
+  border-color: #4C9AFF;
+}
+
+#jbsc-textarea:disabled {
+  background: #F4F5F7;
+  color: #A5ADBA;
+  cursor: not-allowed;
+}
+
+#jbsc-count-label {
+  display: block;
+  font-size: 12px;
+  color: #6B778C;
+  margin: 6px 0 16px;
+  min-height: 18px;
+}
+
+#jbsc-create-btn {
+  background: #0052CC;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+#jbsc-create-btn:hover:not(:disabled) {
+  background: #0747A6;
+}
+
+#jbsc-create-btn:disabled {
+  background: #DFE1E6;
+  color: #A5ADBA;
+  cursor: not-allowed;
+}
+
+#jbsc-modal-error {
+  color: #DE350B;
+  font-size: 13px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #FFEBE6;
+  border-radius: 3px;
+}
+
+#jbsc-progress-list {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+#jbsc-progress-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #F4F5F7;
+  font-size: 13px;
+  color: #172B4D;
+}
+
+#jbsc-progress-list li:last-child {
+  border-bottom: none;
+}
+
+#jbsc-progress-list li::before {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+#jbsc-progress-list li[data-status="pending"]::before {
+  content: "⏳";
+}
+
+#jbsc-progress-list li[data-status="success"]::before {
+  content: "✅";
+}
+
+#jbsc-progress-list li[data-status="error"]::before {
+  content: "❌";
+}
+
+#jbsc-progress-list li[data-status="success"] a {
+  color: #0052CC;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+#jbsc-progress-list li[data-status="success"] a:hover {
+  text-decoration: underline;
+}
+
+.jbsc-error-msg {
+  color: #DE350B;
+  font-size: 12px;
+}
+
+#jbsc-reload-notice {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: #E3FCEF;
+  border: 1px solid #ABF5D1;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #006644;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#jbsc-reload-btn {
+  padding: 4px 12px;
+  border: 1px solid #006644;
+  border-radius: 3px;
+  background: #E3FCEF;
+  color: #006644;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#jbsc-reload-btn:hover {
+  background: #ABF5D1;
+}
