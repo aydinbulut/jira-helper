@@ -28,14 +28,18 @@
 
   // ── Menu injection ─────────────────────────────────────────────────────────
 
-  function findCreateSubtaskItem() {
-    // Strategy 1: known element ID
-    let el = document.getElementById('create-subtask');
-    if (el) return el.closest('li') || el;
+  function isInHiddenTemplate(el) {
+    return !!(el && el.closest('.hidden, .shortcut-links, [hidden]'));
+  }
 
-    // Strategy 2: AUI action class
+  function findCreateSubtaskItem() {
+    // Strategy 1: known element ID (skip hidden template containers)
+    let el = document.getElementById('create-subtask');
+    if (el && !isInHiddenTemplate(el)) return el.closest('li') || el;
+
+    // Strategy 2: AUI action class (skip hidden template containers)
     el = document.querySelector('.issueaction-create-subtask');
-    if (el) return el.closest('li') || el;
+    if (el && !isInHiddenTemplate(el)) return el.closest('li') || el;
 
     // Strategy 3: text scan inside the More dropdown container
     const dropdown = document.getElementById('opsbar-operations_more_drop')
