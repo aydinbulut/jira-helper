@@ -4,6 +4,8 @@ A Chrome extension that adds a **"Create multi-sub-task"** option to the Jira is
 
 ## Features
 
+![More dropdown with "Create multi-sub-task" highlighted](menu.png)
+
 - Adds "Create multi-sub-task" immediately after "Create sub-task" in the More dropdown
 - Each subtask has its own **Summary**, **Component**, and **Estimate (hours)** fields
 - Fixed component list: SFCC BE, SFCC FE, SFCC, SFSC, QA
@@ -30,6 +32,8 @@ A Chrome extension that adds a **"Create multi-sub-task"** option to the Jira is
 5. The extension is now active
 
 ## Usage
+
+![Create Multiple Sub-Tasks modal](modal.png)
 
 1. Navigate to any Jira issue page (URL contains `/browse/PROJ-123`)
 2. Click the **More** dropdown button
