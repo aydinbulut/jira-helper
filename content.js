@@ -186,9 +186,9 @@
       summary:   subtask.summary
     };
 
-    if (subtask.component) {
-      fields.components = [{ name: subtask.component }];
-    }
+    fields.components = subtask.components.map(function (opt) {
+      return { name: opt.value };
+    });
 
     const hours = parseFloat(subtask.estimate);
     if (!isNaN(hours) && hours > 0) {
@@ -252,6 +252,7 @@
 
     const compSelect = document.createElement('select');
     compSelect.className = 'jbsc-component';
+    compSelect.multiple = true;
     COMPONENTS.forEach(function (name) {
       const opt = document.createElement('option');
       opt.value = name;
@@ -469,7 +470,7 @@
       return {
         row:       row,
         summary:   row.querySelector('.jbsc-summary').value.trim(),
-        component: row.querySelector('.jbsc-component').value,
+        components: Array.from(row.querySelector('.jbsc-component').selectedOptions),
         estimate:  row.querySelector('.jbsc-estimate').value
       };
     });
