@@ -123,8 +123,8 @@
 }
 
 .jbsc-col-summary   { flex: 1; }
-.jbsc-col-component { width: 100px; flex-shrink: 0; }
-.jbsc-col-estimate  { width: 52px;  flex-shrink: 0; }
+.jbsc-col-component { width: 160px; flex-shrink: 0; }
+.jbsc-col-estimate  { width: 63px;  flex-shrink: 0; }
 .jbsc-col-delete    { width: 24px;  flex-shrink: 0; }
 
 /* Input fields */
@@ -144,16 +144,117 @@
   outline: none;
 }
 
-.jbsc-component {
-  width: 100px;
+.jbsc-component-select {
+  position: relative;
+  width: 160px;
   flex-shrink: 0;
-  padding: 6px 4px;
+  min-height: 28px;
   border: 1px solid #DFE1E6;
   border-radius: 3px;
-  font-size: 13px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
   font-family: inherit;
   color: #172B4D;
+}
+
+.jbsc-component-select:focus-within,
+.jbsc-component-select.jbsc-open {
+  border-color: #4C9AFF;
+  outline: none;
+}
+
+.jbsc-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  flex: 1;
+  padding: 3px 4px;
+  min-width: 0;
+}
+
+.jbsc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #DFE1E6;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 10px;
+  color: #172B4D;
+  white-space: nowrap;
+}
+
+.jbsc-tag-remove {
+  background: none;
+  border: none;
+  color: #6B778C;
+  cursor: pointer;
+  padding: 0 1px;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.jbsc-tag-remove:hover {
+  color: #DE350B;
+}
+
+.jbsc-chevron {
+  background: none;
+  border: none;
+  color: #5E6C84;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-size: 12px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.jbsc-chevron:hover:not(:disabled) {
+  color: #172B4D;
+}
+
+.jbsc-chevron:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.jbsc-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 100%;
   background: #fff;
+  border: 1px solid #DFE1E6;
+  border-radius: 3px;
+  box-shadow: 0 4px 12px rgba(9, 30, 66, 0.15);
+  z-index: 999;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.jbsc-dropdown-option {
+  padding: 5px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #172B4D;
+  user-select: none;
+}
+
+.jbsc-dropdown-option:hover {
+  background: #F4F5F7;
+}
+
+.jbsc-option-selected {
+  display: none;
+  background: #DEEBFF;
+  color: #0052CC;
+}
+
+.jbsc-option-selected:hover {
+  background: #B3D4FF;
 }
 
 .jbsc-estimate {
@@ -169,7 +270,6 @@
 }
 
 .jbsc-summary:disabled,
-.jbsc-component:disabled,
 .jbsc-estimate:disabled {
   background: #F4F5F7;
   color: #A5ADBA;

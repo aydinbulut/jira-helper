@@ -218,6 +218,132 @@
 
   // ── Row helpers ────────────────────────────────────────────────────────────
 
+  function buildComponentMultiSelect() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'jbsc-component-select';
+
+    const tagList = document.createElement('div');
+    tagList.className = 'jbsc-tag-list';
+
+    const chevron = document.createElement('button');
+    chevron.type = 'button';
+    chevron.className = 'jbsc-chevron';
+    chevron.setAttribute('aria-label', 'Toggle component list');
+    chevron.textContent = '▾';
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'jbsc-dropdown';
+    dropdown.style.display = 'none';
+
+    COMPONENTS.forEach(function (name) {
+      const opt = document.createElement('div');
+      opt.className = 'jbsc-dropdown-option';
+      opt.dataset.value = name;
+      opt.textContent = name;
+      opt.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleTag(name);
+      });
+      dropdown.appendChild(opt);
+    });
+
+    wrapper.append(tagList, chevron, dropdown);
+
+    function getSelectedValues() {
+      return Array.from(tagList.querySelectorAll('.jbsc-tag')).map(function (t) {
+        return t.dataset.value;
+      });
+    }
+
+    function addTag(name) {
+      const tag = document.createElement('span');
+      tag.className = 'jbsc-tag';
+      tag.dataset.value = name;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'jbsc-tag-remove';
+      removeBtn.setAttribute('aria-label', 'Remove ' + name);
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        tag.remove();
+        refreshDropdownSelected();
+      });
+
+      tag.append(name, removeBtn);
+      tagList.appendChild(tag);
+    }
+
+    function toggleTag(name) {
+      const existing = tagList.querySelector('.jbsc-tag[data-value="' + name + '"]');
+      if (existing) {
+        existing.remove();
+      } else {
+        addTag(name);
+      }
+      refreshDropdownSelected();
+    }
+
+    function refreshDropdownSelected() {
+      const selected = getSelectedValues();
+      dropdown.querySelectorAll('.jbsc-dropdown-option').forEach(function (opt) {
+        opt.classList.toggle('jbsc-option-selected', selected.indexOf(opt.dataset.value) !== -1);
+      });
+    }
+
+    var outsideClickHandler = null;
+
+    function openDropdown() {
+      dropdown.style.display = 'block';
+      wrapper.classList.add('jbsc-open');
+      refreshDropdownSelected();
+      outsideClickHandler = function (e) {
+        if (!wrapper.contains(e.target)) closeDropdown();
+      };
+      setTimeout(function () {
+        document.addEventListener('click', outsideClickHandler);
+      }, 0);
+    }
+
+    function closeDropdown() {
+      dropdown.style.display = 'none';
+      wrapper.classList.remove('jbsc-open');
+      if (outsideClickHandler) {
+        document.removeEventListener('click', outsideClickHandler);
+        outsideClickHandler = null;
+      }
+    }
+
+    function toggleDropdown() {
+      if (chevron.disabled) return;
+      if (dropdown.style.display === 'none') openDropdown();
+      else closeDropdown();
+    }
+
+    chevron.addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleDropdown();
+    });
+
+    wrapper.addEventListener('click', function (e) {
+      if (e.target === wrapper || e.target === tagList) toggleDropdown();
+    });
+
+    wrapper.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && dropdown.style.display !== 'none') {
+        e.stopPropagation();
+        closeDropdown();
+      }
+    });
+
+    wrapper._reset = function () {
+      tagList.innerHTML = '';
+    };
+
+    return wrapper;
+  }
+
   function buildRowsHeader() {
     const header = document.createElement('div');
     header.className = 'jbsc-row jbsc-row-header';
@@ -250,15 +376,7 @@
     summaryInput.className = 'jbsc-summary';
     summaryInput.placeholder = 'Subtask title';
 
-    const compSelect = document.createElement('select');
-    compSelect.className = 'jbsc-component';
-    compSelect.multiple = true;
-    COMPONENTS.forEach(function (name) {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      compSelect.appendChild(opt);
-    });
+    const compSelect = buildComponentMultiSelect();
 
     const estInput = document.createElement('input');
     estInput.type = 'number';
@@ -287,7 +405,7 @@
         // Clear the last row instead of removing it
         summaryInput.value = '';
         estInput.value = '';
-        compSelect.selectedIndex = 0;
+        compSelect._reset();
       }
       updateCreateBtn(rowsContainer, createBtn);
     });
@@ -435,6 +553,7 @@
       // Only zoom when focus is not inside a text/number input
       const tag = (document.activeElement || {}).tagName || '';
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (document.activeElement && document.activeElement.closest && document.activeElement.closest('.jbsc-component-select')) return;
 
       if (e.key === '-') {
         e.preventDefault();
@@ -470,7 +589,7 @@
       return {
         row:       row,
         summary:   row.querySelector('.jbsc-summary').value.trim(),
-        components: Array.from(row.querySelector('.jbsc-component').selectedOptions),
+        components: Array.from(row.querySelectorAll('.jbsc-tag')).map(function (t) { return { value: t.dataset.value }; }),
         estimate:  row.querySelector('.jbsc-estimate').value
       };
     });
