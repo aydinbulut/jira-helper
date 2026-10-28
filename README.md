@@ -15,7 +15,7 @@ A Chrome extension that adds a **"Create multi-sub-task"** option to the Jira is
 - **Zoom in/out** — `A−` / `A+` buttons in the modal header scale the entire modal for screen sharing; zoom level is remembered between sessions
 - **Keyboard shortcuts** — press `-` to zoom out, `+` to zoom in (when not typing in an input), `Escape` to close
 - Works across SPA navigation (no page reload needed when switching issues)
-- Compatible with Jira Software Data Center and Server, classic AUI-based UI
+- Compatible with Jira Software Data Center and Server, classic AUI-based UI (tested on Jira DC v10.3.26)
 
 ## Requirements
 

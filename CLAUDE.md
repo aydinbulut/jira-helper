@@ -93,3 +93,5 @@ Jira's issue view is a SPA. The extension patches `history.pushState` and `histo
 | 8.x and older | `/rest/api/2/issue/createmeta?projectKeys=...&expand=projects.issuetypes` |
 
 Jira Cloud is not a supported target (different UI, different auth model).
+
+Only tested against **Jira DC v10.3.26**. Older versions may work via the fallback endpoint but are untested.
