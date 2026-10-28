@@ -235,6 +235,14 @@
   overflow-y: auto;
 }
 
+.jbsc-dropdown-loading {
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #6B778C;
+  font-style: italic;
+  user-select: none;
+}
+
 .jbsc-dropdown-option {
   padding: 5px 9px;
   font-size: 11px;

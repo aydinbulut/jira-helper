@@ -6,7 +6,7 @@
   const MENU_ITEM_ID = 'jbsc-menu-item';
   const OVERLAY_ID   = 'jbsc-overlay';
   const DELAY_MS     = 175;
-  const COMPONENTS   = ['SFCC BE', 'SFCC FE', 'SFCC', 'SFSC', 'QA'];
+
   const ZOOM_LEVELS  = [1, 1.2, 1.4, 1.6];
   const ZOOM_KEY     = 'jbsc-zoom-index';
 
@@ -178,6 +178,16 @@
     return st.id;
   }
 
+  async function fetchProjectComponents(projectKey) {
+    const res = await fetch(
+      '/rest/api/2/project/' + encodeURIComponent(projectKey) + '/components',
+      { credentials: 'include', headers: { 'Accept': 'application/json' } }
+    );
+    if (!res.ok) throw new Error('Cannot load components (' + res.status + ')');
+    const data = await res.json();
+    return data.map(function (c) { return c.name; }).sort();
+  }
+
   async function createSubtask(parentKey, projectKey, issueTypeId, subtask) {
     const fields = {
       project:   { key: projectKey },
@@ -235,17 +245,10 @@
     dropdown.className = 'jbsc-dropdown';
     dropdown.style.display = 'none';
 
-    COMPONENTS.forEach(function (name) {
-      const opt = document.createElement('div');
-      opt.className = 'jbsc-dropdown-option';
-      opt.dataset.value = name;
-      opt.textContent = name;
-      opt.addEventListener('click', function (e) {
-        e.stopPropagation();
-        toggleTag(name);
-      });
-      dropdown.appendChild(opt);
-    });
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'jbsc-dropdown-loading';
+    loadingMsg.textContent = 'Loading components…';
+    dropdown.appendChild(loadingMsg);
 
     wrapper.append(tagList, chevron, dropdown);
 
@@ -339,6 +342,22 @@
 
     wrapper._reset = function () {
       tagList.innerHTML = '';
+    };
+
+    wrapper.setOptions = function (names) {
+      dropdown.innerHTML = '';
+      names.forEach(function (name) {
+        const opt = document.createElement('div');
+        opt.className = 'jbsc-dropdown-option';
+        opt.dataset.value = name;
+        opt.textContent = name;
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggleTag(name);
+        });
+        dropdown.appendChild(opt);
+      });
+      refreshDropdownSelected();
     };
 
     return wrapper;
@@ -460,6 +479,9 @@
   function openModal(issueKey) {
     if (document.getElementById(OVERLAY_ID)) return;
 
+    let loadedComponents = null;
+    let cachedProjectKey = null;
+
     const overlay = document.createElement('div');
     overlay.id = OVERLAY_ID;
 
@@ -534,12 +556,30 @@
     buildInputRow(rowsContainer, createBtn);
     buildInputRow(rowsContainer, createBtn);
 
+    // Fetch components in the background; populate all existing (and future) rows when ready
+    fetchProjectKey(issueKey).then(function (pk) {
+      cachedProjectKey = pk;
+      return fetchProjectComponents(pk);
+    }).then(function (names) {
+      loadedComponents = names;
+      rowsContainer.querySelectorAll('.jbsc-component-select').forEach(function (w) {
+        w.setOptions(names);
+      });
+    }).catch(function () {
+      rowsContainer.querySelectorAll('.jbsc-component-select').forEach(function (w) {
+        w.setOptions([]);
+      });
+      showModalError('Could not load project components.');
+    });
+
     addRowBtn.addEventListener('click', function () {
-      addRow(rowsContainer, createBtn);
+      const row = buildInputRow(rowsContainer, createBtn);
+      if (loadedComponents) row.querySelector('.jbsc-component-select').setOptions(loadedComponents);
+      row.querySelector('.jbsc-summary').focus();
     });
 
     createBtn.addEventListener('click', function () {
-      handleCreate(issueKey, rowsContainer, createBtn, addRowBtn);
+      handleCreate(issueKey, cachedProjectKey, rowsContainer, createBtn, addRowBtn);
     });
 
     closeBtn.addEventListener('click', closeModal);
@@ -580,7 +620,7 @@
 
   // ── Creation handler ───────────────────────────────────────────────────────
 
-  async function handleCreate(parentKey, rowsContainer, createBtn, addRowBtn) {
+  async function handleCreate(parentKey, cachedProjectKey, rowsContainer, createBtn, addRowBtn) {
     const rows = validRows(rowsContainer);
     if (rows.length === 0) return;
 
@@ -608,7 +648,7 @@
 
     let projectKey, issueTypeId;
     try {
-      projectKey  = await fetchProjectKey(parentKey);
+      projectKey  = cachedProjectKey || await fetchProjectKey(parentKey);
       issueTypeId = await fetchSubtaskIssueTypeId(projectKey);
     } catch (err) {
       // Re-enable on pre-flight failure
