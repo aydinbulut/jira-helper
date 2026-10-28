@@ -15,7 +15,7 @@ After editing `content.js` or `styles.css`, click the reload icon on the extensi
 
 ## File Architecture
 
-**`manifest.json`** — MV3 manifest. Scoped to `"matches": ["https://jiraeu.epam.com/*"]` — the extension only activates on that domain. The page-detection guard in `content.js` still limits activation to issue pages (`/browse/PROJ-123`) within that domain.
+**`manifest.json`** — MV3 manifest. Scoped to `"matches": ["https://*/*"]` — the extension injects on any HTTPS page, but the page-detection guard in `content.js` limits actual activation to Jira issue pages (`/browse/PROJ-123` URL pattern + `<meta name="application-name">` containing "jira").
 
 **`content.js`** — All extension logic in a single IIFE. Responsibilities:
 - Page detection guard (URL pattern + `<meta name="application-name">`)
@@ -23,11 +23,11 @@ After editing `content.js` or `styles.css`, click the reload icon on the extensi
 - Menu item injection with idempotency guard
 - SPA navigation detection via `pushState`/`replaceState` override + `popstate`
 - `MutationObserver` to handle lazy-rendered dropdowns
-- Row-based modal UI: `buildRowsHeader()`, `buildInputRow()`, `addRow()`, `validRows()`, `updateCreateBtn()`, `transformRowToResult()`
+- Row-based modal UI: `buildRowsHeader()`, `buildComponentMultiSelect()`, `buildInputRow()`, `addRow()`, `validRows()`, `updateCreateBtn()`, `transformRowToResult()`
 - Zoom controls: `loadZoomIndex()`, `applyZoom()` — use CSS `zoom` property on the modal element, persist in `localStorage`
 - Combined keyboard handler (`modalKeyHandler` closure): Escape closes, `-`/`+` zoom when not in an input
-- Jira REST API: `fetchProjectKey()`, `fetchSubtaskIssueTypeId()`, `createSubtask()` (includes `components` and `timetracking`)
-- `handleCreate()` — orchestrates pre-flight fetch, row collection, sequential creation with 175ms delay, in-place row transformation
+- Jira REST API: `fetchProjectKey()`, `fetchSubtaskIssueTypeId()`, `fetchProjectComponents()`, `createSubtask()` (includes `components` and `timetracking`)
+- `handleCreate()` — orchestrates pre-flight fetch, row collection, sequential creation with 175ms delay, in-place row transformation; accepts `cachedProjectKey` from the modal closure to skip a redundant `fetchProjectKey` call on Create
 
 **`styles.css`** — Modal and overlay styles only. All selectors use the `#jbsc-` prefix to avoid collisions with Jira's AUI styles. No floating button or dropdown item styles (those inherit from Jira).
 
@@ -55,7 +55,18 @@ The primary endpoint `/rest/api/2/issue/createmeta/{projectKey}/issuetypes` was 
 - `timetracking: { originalEstimate: "Xh" }` — only sent if estimate > 0; Jira DC accepts the `Xh` string format
 
 ### Row-based UI
-The modal starts with 3 empty rows. Each row (`buildInputRow()`) contains a text summary input (`flex: 1`), a `<select>` for component (values from `COMPONENTS` constant), a number input for hours, and a delete button. Deleting the last row clears it instead of removing it. `validRows()` filters rows with non-empty summary — only those are submitted.
+The modal starts with 3 empty rows. Each row (`buildInputRow()`) contains a text summary input (`flex: 1`), a custom tag-input component picker (`buildComponentMultiSelect()`), a number input for hours, and a delete button. Deleting the last row clears it instead of removing it. `validRows()` filters rows with non-empty summary — only those are submitted.
+
+The component picker shows selected components as removable pill tags. A `▾` chevron opens an absolute-positioned dropdown listing all project components. `wrapper.setOptions(names)` replaces the dropdown options at runtime (called after the async fetch resolves). `wrapper._reset()` clears all tags (used by the delete-row handler).
+
+### Component picker — dynamic loading
+`fetchProjectComponents(projectKey)` calls `GET /rest/api/2/project/{projectKey}/components`, extracts component names, sorts them alphabetically, and returns the array.
+
+In `openModal()`, two closure variables are declared: `loadedComponents` (null until fetch resolves) and `cachedProjectKey` (null until `fetchProjectKey` resolves). Immediately after the initial 3 rows are built, a non-blocking fetch chain runs: `fetchProjectKey` → `fetchProjectComponents` → `setOptions()` on all `.jbsc-component-select` widgets in the container.
+
+On success, both closure vars are stored. Rows added via `+ Add row` call `setOptions(loadedComponents)` immediately if already resolved; otherwise they start in the "Loading components…" placeholder state and are updated when the fetch resolves (the handler re-queries all `.jbsc-component-select` elements at resolution time, picking up any newly added rows).
+
+On fetch failure, `setOptions([])` clears the placeholder and `showModalError()` displays a banner — subtasks can still be created without a component.
 
 ### 175ms delay between creates
 A small sleep between successive `POST /rest/api/2/issue` calls avoids triggering Jira's rate limiter on large batches. Adjust `DELAY_MS` at the top of `content.js` if needed.
@@ -66,7 +77,7 @@ A small sleep between successive `POST /rest/api/2/issue` calls avoids triggerin
 ### Keyboard handler — `modalKeyHandler` closure
 `handleEscapeKey` was replaced by a module-level `let modalKeyHandler = null`. In `openModal()`, it is assigned as a closure capturing `zoomIndex`, `modal`, `zoomOutBtn`, and `zoomInBtn`. This closure handles three keys:
 - `Escape` → `closeModal()`
-- `-` → zoom out (only if `document.activeElement` is not `INPUT` or `TEXTAREA`)
+- `-` → zoom out (only if `document.activeElement` is not `INPUT`, `TEXTAREA`, or inside `.jbsc-component-select`)
 - `+` → zoom in (same guard)
 
 `closeModal()` removes the handler by reference and nulls it out, ensuring no leak across navigations.
