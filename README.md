@@ -1,5 +1,7 @@
 # Jira Bulk Subtask Creator
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A Chrome extension that adds a **"Create multi-sub-task"** option to the Jira issue More dropdown, letting you create multiple subtasks at once instead of one at a time.
 
 ## Features
@@ -76,6 +78,10 @@ Check your network connection and confirm the Jira instance is reachable.
 
 **Component dropdown shows "Loading components…" and never populates**
 The extension couldn't reach the Jira components API. Check your network connection and confirm you're logged in. If the problem persists, the modal will show an error banner — subtasks can still be created without a component selected.
+
+## Contributing
+
+Bug reports, feature requests, and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR — the short version is: open an issue first, then submit a PR that references it.
 
 ## Privacy
 
